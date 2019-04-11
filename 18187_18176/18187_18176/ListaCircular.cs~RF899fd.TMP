@@ -1,0 +1,184 @@
+﻿using System.Windows.Forms;
+
+public class ListaCircular
+{
+    private Celula cabeca, atualLinha, atualColuna;
+    private int qntLinha, qntColuna;
+    private int quantidade;
+
+    public int QntLinha { get => qntLinha; }
+    public int QntColuna { get => qntColuna; }
+
+    public ListaCircular(int qntLi, int qntCol)
+    {
+        cabeca = new Celula(default(double), -1, -1, null, null);
+        quantidade = 0;
+        qntLinha   = qntLi;
+        qntColuna  = qntCol;
+        inserirNoCabeca();
+    }
+
+    public ListaCircular MultiplicarMatrizes(ListaCircular lista2)
+    {
+        ListaCircular resultado = new ListaCircular(qntLinha, lista2.QntColuna);
+
+    }
+
+    public ListaCircular SomarMatrizes(ListaCircular lista2)
+    {      
+        ListaCircular resultado = new ListaCircular(qntLinha, qntColuna);
+        for (int linha = 0; linha < qntLinha; linha++)
+            for (int coluna = 0; coluna < qntColuna; coluna++)
+                if (valorDe(linha, coluna) + lista2.valorDe(linha, coluna) != 0)
+                    resultado.inserirCelula(valorDe(linha, coluna) + lista2.valorDe(linha, coluna), linha, coluna);
+        return resultado;
+    }
+
+    public bool estaVazio()
+    {
+        if (this.quantidade == 0)
+            return true;
+        return false;
+    }
+
+    private void inserirNoCabeca()
+    {
+        Celula atual = cabeca;
+        for (var i = 0; i < qntLinha; i++)
+        {
+            var cel = new Celula(0, i, -1, null, null);
+
+            atual.Abaixo = cel;
+            atual = atual.Abaixo;
+            atual.Direita = atual;
+        }
+        atual.Abaixo = cabeca;
+
+        atual = cabeca;
+        for (var i = 0; i < qntColuna; i++)
+        {
+            var cel = new Celula(0, -1, i, null, null);
+
+            atual.Direita = cel;
+            atual = atual.Direita;
+            atual.Abaixo = atual;
+        }
+        atual.Direita = cabeca;
+    }
+
+    private void inserirCelula(Celula cel)
+    {
+        if(existe(cel.Linha, cel.Coluna))
+            atualColuna.Abaixo.Valor = cel.Valor;
+        else
+        {
+            cel.Abaixo = atualColuna.Abaixo;
+            atualColuna.Abaixo = cel;
+
+            cel.Direita = atualLinha.Direita;
+            atualLinha.Direita = cel;
+
+            quantidade++;
+        }
+    }
+
+    public bool excluir(int li, int col)
+    {
+        if (li > 0 || col > 0 || li < qntLinha - 1 || col < qntColuna - 1)
+        {
+            if (existe(li, col))
+            {
+                Celula cel = atualLinha.Direita;
+
+                atualColuna.Abaixo = cel.Abaixo;
+                atualLinha.Direita = cel.Direita;
+                quantidade--;
+
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
+
+    public void SomarValorColuna(double val, int coluna)
+    {
+        for (int i = 0; i < qntLinha; i++)
+        {
+            if (valorDe(i, coluna) == 0)
+                inserirCelula(val, i, coluna);
+            else
+            {
+                Celula cel = atualLinha.Direita;
+                if (cel.Valor + val == 0)
+                    excluir(i, coluna);
+                else
+                    inserirCelula(val + cel.Valor, i, coluna);
+            }
+        }
+    }
+
+    public double valorDe(int li, int col)
+    {
+        if (li > 0 || col > 0 || li < qntLinha - 1 || col < qntColuna - 1)
+        {
+            if (existe(li, col))
+                return atualColuna.Abaixo.Valor;
+            else
+                return 0;
+        }
+        return 0;
+    }
+
+    public void Exibir(DataGridView dgv)
+    {
+        Celula p = cabeca;
+        dgv.RowCount = qntLinha;
+        dgv.ColumnCount = qntColuna;
+
+        for (int i = 0; i < qntLinha; i++)
+            for (int x = 0; x < qntColuna; x++)
+                dgv.Rows[i].Cells[x].Value = valorDe(i, x);
+    }
+
+    public void zerarMatriz()
+    {
+        cabeca = atualLinha = atualColuna = null;
+        quantidade = 0;
+        qntLinha = 0;
+        qntColuna = 0;
+    }
+
+    public bool existe(int li, int col)
+    {
+        atualLinha = atualColuna = cabeca;
+
+        for (; atualLinha.Linha < li && atualLinha.Abaixo != atualLinha; atualLinha = atualLinha.Abaixo)
+        { }
+
+        for (; atualLinha.Direita.Coluna < col && atualLinha.Direita != atualLinha && atualLinha.Direita.Coluna != -1; atualLinha = atualLinha.Direita)
+        { }
+
+        for (; atualColuna.Coluna < col && atualColuna.Direita != atualColuna; atualColuna = atualColuna.Direita)
+        { }
+
+        for (; atualColuna.Abaixo.Linha < li && atualColuna.Abaixo != atualColuna && atualColuna.Abaixo.Linha != -1; atualColuna = atualColuna.Abaixo)
+        { }
+
+        Celula procurada = atualLinha.Direita;
+
+        if (procurada.Coluna != col || procurada.Linha != li)
+            return false;
+
+        return true;
+    }
+
+    public void inserirCelula(double valor, int linha,int coluna)
+    {
+        if (linha > 0 || coluna > 0 || linha < qntLinha - 1 || coluna < qntColuna - 1)
+        { 
+            var cel = new Celula(valor, linha, coluna, null, null);
+            inserirCelula(cel);
+        }
+    }
+}
